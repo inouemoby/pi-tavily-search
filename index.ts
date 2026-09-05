@@ -1,4 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { Text } from "@earendil-works/pi-tui";
 import { Type, type Static } from "typebox";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -253,6 +254,16 @@ export default function (pi: ExtensionAPI) {
           max_images: maxImages,
         },
       };
+    },
+    renderCall(args, theme) {
+      const depth = args.search_depth === "advanced" ? " [advanced]" : " [basic]";
+      return new Text(theme.fg("toolTitle", theme.bold("image_search ")) + theme.fg("dim", `${args.query}${depth}`), 0, 0);
+    },
+    renderResult(result, { isPartial }, theme) {
+      if (isPartial) return new Text(theme.fg("warning", "Searching images..."), 0, 0);
+      if (result.isError) return new Text(theme.fg("error", "Image search failed"), 0, 0);
+      const count = result.details?.count ?? 0;
+      return new Text(theme.fg("success", `✓ ${count} image(s)`), 0, 0);
     },
   });
 }
