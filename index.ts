@@ -1,8 +1,30 @@
-import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { Type, type Static } from "typebox";
+import { existsSync, readFileSync } from "node:fs";
+import { join } from "node:path";
 
 const TAVILY_SEARCH_URL = "https://api.tavily.com/search";
 const TAVILY_MAX_RESULTS = 20;
+
+function getTavilyApiKey(): string | undefined {
+  const fromEnv = process.env.TAVILY_API_KEY?.trim();
+  if (fromEnv) return fromEnv;
+
+  const agentDir = process.env.PI_CODING_AGENT_DIR ||
+    join(process.env.USERPROFILE || process.env.HOME || ".", ".pi", "agent");
+  const authPath = join(agentDir, "auth.json");
+  if (!existsSync(authPath)) return undefined;
+
+  try {
+    const auth = JSON.parse(readFileSync(authPath, "utf8")) as {
+      tavily?: { key?: unknown };
+    };
+    const key = auth.tavily?.key;
+    return typeof key === "string" && key.trim() ? key.trim() : undefined;
+  } catch {
+    return undefined;
+  }
+}
 const DEFAULT_MAX_IMAGES = 20;
 const MAX_IMAGES = 100;
 
@@ -169,10 +191,8 @@ export default function (pi: ExtensionAPI) {
       params: ImageSearchParams,
       signal: AbortSignal,
       _onUpdate: unknown,
-      ctx: ExtensionContext,
     ) {
-      const auth = await ctx.modelRegistry.getAuth("tavily", { signal });
-      const apiKey = auth?.auth.apiKey;
+      const apiKey = getTavilyApiKey();
       if (!apiKey) {
         throw new Error("Tavily API key is not configured. Run /login tavily first.");
       }
