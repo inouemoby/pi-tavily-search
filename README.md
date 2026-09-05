@@ -2,7 +2,7 @@
 
 A Pi extension that provides **image search only** through Tavily.
 
-The `tavily_image_search` tool returns only pairs of:
+The `image_search` tool returns only pairs of:
 
 ```json
 {
@@ -42,4 +42,4 @@ The request always sets `include_images: true` and disables answer, raw-content,
 
 Tavily's top-level image results do not always include their source page URL. The extension returns only images for which it can resolve a corresponding page URL, using the matching result title or result-level image entries. Duplicate image URLs are removed.
 
-The `tavily` provider deliberately has an empty model list. It exists only so Pi's `/login` flow can store and resolve Tavily API keys; it is not an LLM provider.
+The `tavily` provider deliberately exposes only a login-required placeholder model. It exists so Pi's `/login` flow can store and resolve Tavily API keys; it is not an LLM provider.

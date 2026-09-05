@@ -153,7 +153,7 @@ export default function (pi: ExtensionAPI) {
   });
 
   pi.registerTool({
-    name: "tavily_image_search",
+    name: "image_search",
     label: "Tavily Image Search",
     description:
       "Search images with Tavily and return only image URLs plus their corresponding source page URLs. Never return webpage text, snippets, descriptions, or raw content. Defaults to Tavily basic search with its maximum of 20 source results; advanced search is available when explicitly requested.",
