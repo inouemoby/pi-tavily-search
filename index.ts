@@ -67,13 +67,14 @@ type ImageSearchParams = Static<typeof imageSearchSchema>;
 
 type TavilyImage = {
   url?: unknown;
+  image_url?: unknown;
   title?: unknown;
 };
 
 type TavilyResult = {
   url?: unknown;
   title?: unknown;
-  images?: TavilyImage[];
+  images?: Array<TavilyImage | string>;
 };
 
 type TavilyResponse = {
@@ -102,8 +103,17 @@ function comparableTitle(value: unknown): string {
     : "";
 }
 
+function imageUrlFromValue(image: unknown): unknown {
+  if (typeof image === "string") return image;
+  if (image && typeof image === "object") {
+    const value = image as TavilyImage;
+    return value.url ?? value.image_url;
+  }
+  return undefined;
+}
+
 function addPair(pairs: ImagePair[], seen: Set<string>, image: unknown, page: unknown): void {
-  const imageUrl = httpUrl(image);
+  const imageUrl = httpUrl(imageUrlFromValue(image));
   const pageUrl = httpUrl(page);
   if (!imageUrl || !pageUrl || seen.has(imageUrl)) return;
   seen.add(imageUrl);
@@ -121,7 +131,7 @@ function extractImagePairs(data: TavilyResponse, maxImages: number): ImagePair[]
   const topImages = Array.isArray(data.images) ? data.images : [];
   for (const image of topImages) {
     if (pairs.length >= maxImages) break;
-    const imageUrl = httpUrl(image?.url);
+    const imageUrl = httpUrl(imageUrlFromValue(image));
     if (!imageUrl) continue;
 
     const matchingResult = results.find((result) => {
@@ -132,7 +142,7 @@ function extractImagePairs(data: TavilyResponse, maxImages: number): ImagePair[]
     });
 
     const matchingImageResult = results.find((result) =>
-      Array.isArray(result.images) && result.images.some((resultImage) => resultImage?.url === imageUrl),
+      Array.isArray(result.images) && result.images.some((resultImage) => imageUrlFromValue(resultImage) === imageUrl),
     );
 
     addPair(pairs, seen, imageUrl, matchingResult?.url ?? matchingImageResult?.url);
@@ -146,7 +156,7 @@ function extractImagePairs(data: TavilyResponse, maxImages: number): ImagePair[]
     if (!pageUrl || !Array.isArray(result.images)) continue;
     for (const image of result.images) {
       if (pairs.length >= maxImages) break;
-      addPair(pairs, seen, image?.url, pageUrl);
+      addPair(pairs, seen, image, pageUrl);
     }
   }
 
